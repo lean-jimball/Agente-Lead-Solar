@@ -1,0 +1,13 @@
+playwright
+google-genai
+pywhatkit
+streamlit
+pandas
+python-dotenv
+folium
+streamlit-folium
+pyairtable
+selenium
+psutil
+plotly
+

@@ -1,0 +1,86 @@
+﻿# Archivos de configuración sensibles
+.env
+*.env
+.env.local
+.env.*.local
+
+# Base de datos
+leads.db
+leads_backup*.db
+*.db
+*.sqlite
+*.sqlite3
+
+# Archivos temporales
+temp_results.json
+PyWhatKit_DB.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Entornos virtuales
+venv/
+ENV/
+env/
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+*.out
+
+# Playwright
+.playwright/
+playwright-report/
+test-results/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Backups
+backup/
+*.bak
+
+# Datos sensibles
+data/
+exports/
+*.csv
+*.xlsx
+
+# Sistema operativo
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Archivos de diagnóstico
+diagnostico.txt
