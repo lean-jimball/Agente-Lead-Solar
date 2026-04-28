@@ -936,7 +936,7 @@ else:
                     showlegend=False
                 )
                 
-                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+                st.plotly_chart(fig, width='stretch', config={'displayModeBar': False})
                 
             else:
                 st.info("No hay datos de pipeline")
@@ -1077,7 +1077,7 @@ else:
                         showlegend=False
                     )
                     
-                    st.plotly_chart(fig_negocio, use_container_width=True, config={'displayModeBar': False})
+                    st.plotly_chart(fig_negocio, width='stretch', config={'displayModeBar': False})
                     
                     # Resumen financiero
                     total_proyeccion_negocios = negocio_counts['Proyeccion_Ventas'].sum()

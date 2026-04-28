@@ -232,12 +232,14 @@ def send_whatsapp_with_selenium(leads_data, modo_preview=True):
 def send_whatsapp_with_desktop_urls(leads_data, modo_preview=True):
     """
     Envía mensajes usando URLs de WhatsApp que abren en la app de escritorio
+    INCLUYE DELAYS ANTI-SPAM para evitar bloqueos de WhatsApp
     """
     if not leads_data:
         print("❌ No hay leads para enviar")
         return 0
 
     print(f"\n🚀 Enviando con WhatsApp Desktop - {len(leads_data)} leads")
+    print(f"⚠️  IMPORTANTE: Se agregarán delays entre mensajes para evitar spam")
     
     # Detectar WhatsApp Desktop
     is_running, status = detect_whatsapp_desktop()
@@ -332,6 +334,13 @@ def send_whatsapp_with_desktop_urls(leads_data, modo_preview=True):
                 conn.commit()
                 print(f"✅ Marcado como enviado: {nombre}")
                 enviados += 1
+                
+                # DELAY ANTI-SPAM: Esperar entre mensajes
+                if idx < len(leads_data):  # Si no es el último
+                    delay_segundos = 15  # 15 segundos entre mensajes
+                    print(f"\n⏳ Esperando {delay_segundos} segundos antes del siguiente mensaje...")
+                    print(f"   (Esto evita que WhatsApp te marque como spam)")
+                    time.sleep(delay_segundos)
                 
             elif resultado == 'n':
                 # Marcar como No WhatsApp
