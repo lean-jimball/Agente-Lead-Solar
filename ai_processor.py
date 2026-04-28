@@ -54,9 +54,14 @@ def get_base_score(tipo_negocio, nombre):
     if not tipo_negocio:
         return 5
     
+    # Normalizar: quitar acentos para comparación
+    import unicodedata
     tipo_lower = tipo_negocio.lower()
+    tipo_normalized = ''.join(c for c in unicodedata.normalize('NFD', tipo_lower) if unicodedata.category(c) != 'Mn')
+    
     for keyword, score in INDUSTRY_SCORES.items():
-        if keyword in tipo_lower:
+        keyword_normalized = ''.join(c for c in unicodedata.normalize('NFD', keyword) if unicodedata.category(c) != 'Mn')
+        if keyword_normalized in tipo_normalized:
             return score
     return 4  # Default para negocios locales no listados
 
