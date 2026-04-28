@@ -25,9 +25,17 @@ if errorlevel 1 (
 
 echo.
 echo Iniciando aplicacion web...
-echo La aplicacion se abrira en tu navegador
-echo Presiona Ctrl+C para detener
 echo.
+echo IMPORTANTE: 
+echo - La app se abrira en: http://localhost:8501
+echo - Si no abre automaticamente, copia esa URL en tu navegador
+echo - Para WhatsApp, usa esta version local
+echo - Presiona Ctrl+C para detener
+echo.
+
+REM Esperar 3 segundos y abrir navegador
+timeout /t 3 /nobreak >nul
+start http://localhost:8501
 
 streamlit run app.py
 
