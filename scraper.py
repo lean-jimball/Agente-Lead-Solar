@@ -374,24 +374,42 @@ def scrape_google_maps(query, max_results=5):
                     # es probable que Google devolvió resultados de otra ubicación.
                     direccion_lower = direccion.lower() if direccion else ""
                     ciudad_query_lower = ciudad_query.lower() if ciudad_query else ""
+                    nombre_lower = nombre.lower()
 
-                    # Hacer validación más flexible - buscar palabras clave de la ciudad
-                    palabras_ciudad = ciudad_query_lower.split() if ciudad_query_lower else []
-                    palabras_importantes = [p for p in palabras_ciudad if len(p) > 3]
+                    # Casos especiales de ciudades compuestas o con variantes
+                    ciudad_variantes = {
+                        "los cabos": ["cabo san lucas", "san jose del cabo", "cabos", "cabo"],
+                        "san jose del cabo": ["san jose", "cabo"],
+                        "cabo san lucas": ["cabo san lucas", "cabo"],
+                    }
                     
-                    resultado_fuera_de_ciudad = (
-                        ciudad_query_lower and
-                        len(palabras_importantes) > 0 and
-                        not any(
-                            palabra in direccion_lower
-                            for palabra in palabras_importantes
-                        ) and
-                        # Verificación adicional: si no hay dirección pero el nombre contiene la ciudad
-                        not any(
-                            palabra in nombre.lower()
-                            for palabra in palabras_importantes
+                    # Verificar si la ciudad tiene variantes conocidas
+                    variantes_buscar = ciudad_variantes.get(ciudad_query_lower, [])
+                    
+                    if variantes_buscar:
+                        # Para ciudades con variantes, buscar cualquiera de ellas
+                        resultado_fuera_de_ciudad = not any(
+                            variante in direccion_lower or variante in nombre_lower
+                            for variante in variantes_buscar
                         )
-                    )
+                    else:
+                        # Hacer validación más flexible - buscar palabras clave de la ciudad
+                        palabras_ciudad = ciudad_query_lower.split() if ciudad_query_lower else []
+                        palabras_importantes = [p for p in palabras_ciudad if len(p) > 3]
+                        
+                        resultado_fuera_de_ciudad = (
+                            ciudad_query_lower and
+                            len(palabras_importantes) > 0 and
+                            not any(
+                                palabra in direccion_lower
+                                for palabra in palabras_importantes
+                            ) and
+                            # Verificación adicional: si no hay dirección pero el nombre contiene la ciudad
+                            not any(
+                                palabra in nombre_lower
+                                for palabra in palabras_importantes
+                            )
+                        )
 
                     if resultado_fuera_de_ciudad:
                         print(
