@@ -172,166 +172,161 @@ def generar_mensaje_calificado(lead):
     except:
         ahorro_anual_txt = None
     
-    # SEGMENTACIÓN POR SCORE - DIFERENTES ENFOQUES DE ASESORÍA
+    # SEGMENTACIÓN POR SCORE - MENSAJES PROFESIONALES Y CONFIABLES
     
     if score >= 9:
-        # 🔥 SCORE 9-10: ASESOR EXPERTO - MENSAJE DIRECTO/URGENTE
+        # 🔥 SCORE 9-10: ASESOR EXPERTO - PROFESIONAL Y DIRECTO
         mensajes_premium = [
-            f"""Hola, buen día.
+            f"""Buen día, soy {random.choice(['Carlos', 'Ana', 'Miguel'])} de CySlean.
 
-Soy asesor especializado de CySlean. Hemos identificado tu negocio como candidato PRIORITARIO para optimización energética.
+Somos una empresa especializada en energía solar para negocios en México.
 
-Análisis preliminar para {tipo_especifico} en {ciudad}:
-• Ahorro potencial: {ahorro_txt}/mes
-• ROI proyectado: Excelente para tu sector
-• Oportunidad limitada en tu zona
+Realizamos un análisis de tu zona y tu {tipo_str} en {ciudad} tiene excelente potencial de ahorro: aproximadamente {ahorro_txt}/mes en electricidad.
 
-Como experto en el sector {sector}, te recomiendo evaluar esta oportunidad pronto.
+Trabajamos con {tipo_especifico} en todo el país ayudándoles a reducir costos de forma sustentable.
 
-¿Podemos agendar una consultoría técnica esta semana?
+¿Te interesaría conocer más detalles sin compromiso?
 
 Responde:
-✅ SÍ - Agendemos pronto
-⏰ DESPUÉS - Próxima semana
-❌ NO - No por ahora
+✅ SÍ - Me interesa
+⏰ DESPUÉS - Otro momento
+❌ NO - No gracias
 
-CySlean | Asesoría Especializada
+CySlean - Energía Solar Empresarial
+🌐 www.cyslean.com
 📞 771 661 2061""",
 
             f"""Hola, buen día.
 
-Te contacto como asesor energético de CySlean. Tu negocio tiene un perfil EXCEPCIONAL para energía renovable.
+Te contacto de CySlean, empresa de energía solar para negocios.
 
-Datos específicos para tu {tipo_str} en {ciudad}:
-• Potencial de ahorro: {ahorro_txt} mensuales
-• Sector {sector}: Alta viabilidad técnica
-• Análisis: Candidato prioritario
+Hemos identificado que {tipo_especifico} en {ciudad} tienen un potencial de ahorro importante en electricidad (aproximadamente {ahorro_txt}/mes).
 
-Mi recomendación profesional: Evaluar inmediatamente.
+Nos especializamos en el sector {sector} y trabajamos con empresas serias que buscan reducir costos operativos.
 
-¿Te interesa una consultoría técnica sin costo?
+¿Te gustaría recibir información sobre cómo funciona?
 
-✅ SÍ - Coordinar visita
-⏰ DESPUÉS - En unos días  
+✅ SÍ - Envíenme información
+⏰ DESPUÉS - Más adelante
 ❌ NO - No me interesa
 
-CySlean Asesoría Técnica
+CySlean
+🌐 www.cyslean.com
 📞 771 661 2061"""
         ]
         return random.choice(mensajes_premium)
     
     elif score >= 8:
-        # 🚀 SCORE 8-8.9: ALIADO COMERCIAL - MENSAJE PERSUASIVO
+        # 🚀 SCORE 8-8.9: ALIADO COMERCIAL - PROFESIONAL Y CERCANO
         mensajes_alta_prioridad = [
-            f"""Hola, buen día.
+            f"""Buen día, te saludo de CySlean.
 
-Soy tu aliado comercial en CySlean, consultoría energética.
+Somos una empresa mexicana especializada en paneles solares para negocios.
 
-Estamos apoyando a {tipo_especifico} exitosos en {ciudad} a reducir significativamente sus costos operativos.
+Estamos trabajando con {tipo_especifico} en {ciudad} y hemos visto ahorros promedio de {ahorro_txt}/mes en electricidad.
 
-Tu negocio califica para ahorros de {ahorro_txt}/mes. En el sector {sector}, estos resultados son muy atractivos.
+Nos gustaría compartirte información sobre cómo otros negocios del sector {sector} están reduciendo sus costos de luz.
 
-Como tu asesor, te recomiendo conocer las opciones disponibles.
-
-¿Te interesa que te comparta el análisis completo?
+¿Te interesa conocer más?
 
 Responde:
-✅ SÍ - Envíame el análisis
-⏰ DESPUÉS - Más adelante
+✅ SÍ - Quiero información
+⏰ DESPUÉS - Otro día
 ❌ NO - No gracias
 
-CySlean | Tu Aliado Energético
+CySlean - Energía Solar
+🌐 www.cyslean.com
 📞 771 661 2061""",
 
             f"""Hola, buen día.
 
-Te escribo de CySlean como tu consultor en optimización energética.
+Soy asesor de CySlean, empresa de energía solar empresarial.
 
-Hemos identificado una excelente oportunidad para {tipo_especifico} como el tuyo en {ciudad}.
+Trabajamos con {tipo_especifico} ayudándoles a reducir sus costos de electricidad mediante paneles solares.
 
-Beneficios proyectados:
-• Reducción mensual: {ahorro_txt}
-• Sector {sector}: Resultados comprobados
-• Sin afectar tu operación
+Tu negocio en {ciudad} podría ahorrar aproximadamente {ahorro_txt}/mes según nuestros cálculos del sector {sector}.
 
-¿Te gustaría que te asesore sobre las mejores opciones?
+¿Te gustaría que te expliquemos cómo funciona?
 
-✅ SÍ - Quiero asesoría
-⏰ DESPUÉS - Otro momento
+✅ SÍ - Me interesa
+⏰ DESPUÉS - Más tarde
 ❌ NO - No por ahora
 
-CySlean Consultoría
+CySlean
+🌐 www.cyslean.com
 📞 771 661 2061"""
         ]
         return random.choice(mensajes_alta_prioridad)
     
     elif score >= 7:
-        # ⚡ SCORE 7-7.9: CONSULTOR - MENSAJE EDUCATIVO
+        # ⚡ SCORE 7-7.9: CONSULTOR - EDUCATIVO Y TRANSPARENTE
         mensajes_educativos = [
             f"""Hola, buen día.
 
-Soy consultor de CySlean, especialistas en energía renovable.
+Te contacto de CySlean, empresa de energía solar para negocios en México.
 
-Estamos compartiendo información valiosa con {tipo_especifico} de {ciudad} sobre cómo optimizar costos energéticos.
+Estamos compartiendo información con {tipo_especifico} de {ciudad} sobre cómo reducir costos de electricidad con paneles solares.
 
-Según nuestros estudios en el sector {sector}, negocios como el tuyo pueden reducir hasta {ahorro_txt} mensuales con las estrategias correctas.
+Según nuestros estudios, negocios del sector {sector} pueden ahorrar hasta {ahorro_txt}/mes.
 
-¿Te interesa conocer estas alternativas?
+Si te interesa conocer más sobre esta alternativa, con gusto te compartimos información.
 
 Responde:
 ✅ SÍ - Envíenme información
-⏰ DESPUÉS - En otro momento
+⏰ DESPUÉS - Otro momento
 ❌ NO - No me interesa
 
-CySlean Consultoría Energética
+CySlean
+🌐 www.cyslean.com
 📞 771 661 2061""",
 
-            f"""Hola, buen día.
+            f"""Buen día.
 
-Te contacto de CySlean para compartir información sobre optimización energética.
+Soy de CySlean, empresa especializada en energía solar para negocios.
 
-Estamos educando a propietarios de {tipo_especifico} en {ciudad} sobre alternativas sustentables para reducir costos.
+Estamos educando a propietarios de {tipo_especifico} en {ciudad} sobre alternativas para reducir costos de electricidad.
 
-Tu tipo de negocio tiene potencial de ahorro de {ahorro_txt}/mes según nuestros análisis del sector {sector}.
+Tu tipo de negocio tiene potencial de ahorro de {ahorro_txt}/mes según datos del sector {sector}.
 
-¿Te gustaría recibir material informativo?
+¿Te gustaría recibir información general?
 
-✅ SÍ - Envíenme detalles
-⏰ DESPUÉS - Más adelante  
+✅ SÍ - Me interesa
+⏰ DESPUÉS - Más adelante
 ❌ NO - No gracias
 
-CySlean | Educación Energética
+CySlean - Energía Solar
+🌐 www.cyslean.com
 📞 771 661 2061"""
         ]
         return random.choice(mensajes_educativos)
     
     else:
-        # 🟡 SCORE 5-6.9: ASESOR INFORMATIVO - MENSAJE SUAVE/NUTRIR
+        # 🟡 SCORE 5-6.9: ASESOR INFORMATIVO - SUAVE Y RESPETUOSO
         mensajes_suaves = [
             f"""Hola, buen día.
 
-Soy asesor de CySlean. Estamos realizando un estudio sobre consumo energético en {tipo_especifico} de {ciudad}.
+Te saludo de CySlean, empresa de energía solar empresarial en México.
 
-Hemos notado que negocios en el sector {sector} están explorando alternativas para optimizar sus costos de electricidad.
+Estamos realizando un estudio sobre consumo energético en {tipo_especifico} de {ciudad}.
 
-Según nuestros datos, hay potencial de ahorro de {ahorro_txt} mensuales en casos similares al tuyo.
+Hemos notado que negocios del sector {sector} están explorando paneles solares para reducir costos de luz (ahorros de {ahorro_txt}/mes en promedio).
 
-¿Te interesaría recibir información general sobre estas alternativas?
+Si te interesa recibir información general sobre esta alternativa, con gusto te la compartimos.
 
 Responde cuando gustes:
 ✅ SÍ - Me interesa saber más
 ⏰ DESPUÉS - Tal vez después
 ❌ NO - No por ahora
 
-Saludos,
-CySlean Asesoría
+CySlean
+🌐 www.cyslean.com
 📞 771 661 2061""",
 
-            f"""Hola, buen día.
+            f"""Buen día.
 
-Te saludo de CySlean, consultoría en energía renovable.
+Te contacto de CySlean, empresa mexicana de energía solar para negocios.
 
-Estamos compartiendo información educativa con {tipo_especifico} de {ciudad} sobre tendencias en optimización energética.
+Estamos compartiendo información educativa con {tipo_especifico} de {ciudad} sobre alternativas para optimizar costos de electricidad.
 
 Tu sector ({sector}) muestra oportunidades interesantes, con ahorros potenciales de {ahorro_txt}/mes en casos similares.
 
@@ -342,7 +337,8 @@ Sin presión, responde si te interesa:
 ⏰ DESPUÉS - Quizás más adelante
 ❌ NO - No gracias
 
-CySlean | Información Energética
+CySlean
+🌐 www.cyslean.com
 📞 771 661 2061"""
         ]
         return random.choice(mensajes_suaves)
