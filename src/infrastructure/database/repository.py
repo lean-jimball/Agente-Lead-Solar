@@ -80,12 +80,12 @@ class LeadRepository:
             conn.close()
 
     def get_all(self, limit: int = 2000) -> List[dict]:
-        """Obtiene leads desde la BD con límite para performance."""
+        """Obtiene leads desde la BD con límite para performance. Los más recientes primero."""
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         try:
             cursor = conn.execute(
-                "SELECT * FROM leads ORDER BY score_ia DESC, fecha_creacion DESC LIMIT ?",
+                "SELECT * FROM leads ORDER BY fecha_creacion DESC, score_ia DESC LIMIT ?",
                 (limit,)
             )
             rows = cursor.fetchall()
