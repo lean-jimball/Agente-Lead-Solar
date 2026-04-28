@@ -1187,9 +1187,9 @@ else:
             st.markdown("### 📝 Gestión de Estados")
             st.markdown("*Tabla compacta - Los cambios en Pipeline se guardan automáticamente*")
             
-            # Headers compactos
-            col_headers = st.columns([0.4, 2.8, 0.9, 1.1, 0.6, 1.1, 1.4])
-            headers = ['ID', 'Lead Info', 'Tipo', 'Tel/Ciudad', 'Score', 'Ahorro', 'Pipeline']
+            # Headers compactos (sin ID)
+            col_headers = st.columns([3.2, 1.0, 1.2, 0.7, 1.2, 1.5])
+            headers = ['Lead Info', 'Tipo', 'Tel/Ciudad', 'Score', 'Ahorro', 'Pipeline']
             
             # Headers con estilo mejorado
             for i, header in enumerate(headers):
@@ -1202,32 +1202,29 @@ else:
                 with st.container():
                     st.markdown('<div class="pipeline-table-row">', unsafe_allow_html=True)
                     
-                    cols = st.columns([0.4, 2.8, 0.9, 1.1, 0.6, 1.1, 1.4])
+                    cols = st.columns([3.2, 1.0, 1.2, 0.7, 1.2, 1.5])
                     
-                    # ID compacto
-                    cols[0].markdown(f'<div class="pipeline-table-cell"><strong>{row["id"]}</strong></div>', unsafe_allow_html=True)
-                    
-                    # Lead Info (Nombre + Estado geográfico)
+                    # Lead Info (Nombre + Estado geográfico) - MÁS ESPACIO
                     lead_info = f'<strong>{row["nombre"]}</strong><br><small style="color: #94a3b8;">{row["poblacion"]}, {row["estado"]}</small>'
-                    cols[1].markdown(f'<div class="pipeline-table-cell">{lead_info}</div>', unsafe_allow_html=True)
+                    cols[0].markdown(f'<div class="pipeline-table-cell">{lead_info}</div>', unsafe_allow_html=True)
                     
                     # Tipo compacto
-                    tipo_short = (row["tipo_negocio"][:8] + "...") if pd.notna(row["tipo_negocio"]) and len(str(row["tipo_negocio"])) > 8 else (row["tipo_negocio"] if pd.notna(row["tipo_negocio"]) else "-")
-                    cols[2].markdown(f'<div class="pipeline-table-cell" title="{row["tipo_negocio"] if pd.notna(row["tipo_negocio"]) else ""}">{tipo_short}</div>', unsafe_allow_html=True)
+                    tipo_short = (row["tipo_negocio"][:10] + "...") if pd.notna(row["tipo_negocio"]) and len(str(row["tipo_negocio"])) > 10 else (row["tipo_negocio"] if pd.notna(row["tipo_negocio"]) else "-")
+                    cols[1].markdown(f'<div class="pipeline-table-cell" title="{row["tipo_negocio"] if pd.notna(row["tipo_negocio"]) else ""}">{tipo_short}</div>', unsafe_allow_html=True)
                     
                     # Teléfono compacto con estado
                     telefono_text = row['telefono'] if pd.notna(row['telefono']) else 'Sin tel'
-                    if len(str(telefono_text)) > 10 and telefono_text != 'Sin tel':
-                        telefono_display = telefono_text[:10] + "..."
+                    if len(str(telefono_text)) > 12 and telefono_text != 'Sin tel':
+                        telefono_display = telefono_text[:12] + "..."
                     else:
                         telefono_display = telefono_text
                     
                     telefono_color = '#ef4444' if telefono_text == 'Sin tel' else '#e2e8f0'
-                    cols[3].markdown(f'<div class="pipeline-table-cell" style="color: {telefono_color}; font-size: 0.8rem;" title="{telefono_text}">{telefono_display}</div>', unsafe_allow_html=True)
+                    cols[2].markdown(f'<div class="pipeline-table-cell" style="color: {telefono_color}; font-size: 0.8rem;" title="{telefono_text}">{telefono_display}</div>', unsafe_allow_html=True)
                     
                     # Score con color
                     score_color = '#10b981' if row['score_ia'] >= 7 else '#f59e0b' if row['score_ia'] >= 4 else '#ef4444'
-                    cols[4].markdown(f'<div class="pipeline-table-cell" style="color: {score_color}; font-weight: 600; text-align: center;">{row["score_ia"]}</div>', unsafe_allow_html=True)
+                    cols[3].markdown(f'<div class="pipeline-table-cell" style="color: {score_color}; font-weight: 600; text-align: center;">{row["score_ia"]}</div>', unsafe_allow_html=True)
                     
                     # Ahorro compacto
                     try:
@@ -1242,11 +1239,11 @@ else:
                             ahorro_short = f"${ahorro_num:,.0f}"
                     except Exception as e:
                         ahorro_short = "$0"
-                    cols[5].markdown(f'<div class="pipeline-table-cell" style="color: #10b981; font-weight: 600; font-size: 0.8rem;" title="${ahorro_num:,.0f}/mes">{ahorro_short}</div>', unsafe_allow_html=True)
+                    cols[4].markdown(f'<div class="pipeline-table-cell" style="color: #10b981; font-weight: 600; font-size: 0.8rem;" title="${ahorro_num:,.0f}/mes">{ahorro_short}</div>', unsafe_allow_html=True)
                     
                     # Lista desplegable para Pipeline con auto-guardado mejorado
                     estado_actual = row['estado_pipeline']
-                    nuevo_estado = cols[6].selectbox(
+                    nuevo_estado = cols[5].selectbox(
                         "",
                         estados_pipeline,
                         index=estados_pipeline.index(estado_actual) if estado_actual in estados_pipeline else 0,
