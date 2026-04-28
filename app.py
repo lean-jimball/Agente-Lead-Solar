@@ -524,10 +524,10 @@ else:
         # Contenedor para las columnas del dashboard
         st.markdown('<div class="dashboard-columns">', unsafe_allow_html=True)
         
-        # Dividir en dos columnas: Mapa y Gráfico de Pipeline
-        col_map, col_pipeline = st.columns([1, 1], gap="small")
+        # Dividir en dos columnas: Mapa (izquierda) y Gráficos (derecha)
+        col_map, col_graficos = st.columns([1, 1], gap="small")
         
-        # COLUMNA 1: MAPA
+        # COLUMNA 1: MAPA (ocupa toda la altura)
         with col_map:
             st.markdown('<div class="section-title">🗺️ Distribución por Estado</div>', unsafe_allow_html=True)
             
@@ -760,7 +760,7 @@ else:
                 map_data = st_folium(
                     m, 
                     width="100%",  # Usar porcentaje en lugar de píxeles fijos
-                    height=480,
+                    height=900,  # Altura mayor para ocupar el espacio de los dos gráficos
                     returned_objects=["last_object_clicked"]
                 )
                 
@@ -787,8 +787,9 @@ else:
             else:
                 st.warning("⚠️ No se reconocieron estados")
         
-        # COLUMNA 2: GRÁFICO DE PIPELINE
-        with col_pipeline:
+        # COLUMNA 2: GRÁFICOS APILADOS (Pipeline + Tipos de Negocio)
+        with col_graficos:
+            # GRÁFICO 1: ESTADO DEL PIPELINE
             st.markdown('<div class="section-title">📊 Estado del Pipeline</div>', unsafe_allow_html=True)
             
             # Contar leads por estado de pipeline
@@ -935,10 +936,162 @@ else:
                     showlegend=False
                 )
                 
-                st.plotly_chart(fig, width='stretch', config={'displayModeBar': False})
+                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
                 
             else:
                 st.info("No hay datos de pipeline")
+            
+            # Separador entre gráficos
+            st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
+            
+            # GRÁFICO 2: TIPOS DE NEGOCIO
+            st.markdown('<div class="section-title">🏢 Proyección por Tipo de Negocio</div>', unsafe_allow_html=True)
+            
+            # Agrupar por tipo de negocio
+            if 'tipo_negocio' in df.columns and df['tipo_negocio'].notna().any():
+                # Contar leads por tipo de negocio
+                negocio_counts = df['tipo_negocio'].value_counts().reset_index()
+                negocio_counts.columns = ['Tipo', 'Cantidad']
+                
+                # Calcular proyecciones financieras por tipo de negocio
+                proyecciones_negocio = []
+                kwp_totales = []
+                ahorro_totales = []
+                
+                for tipo in negocio_counts['Tipo']:
+                    leads_tipo = df[df['tipo_negocio'] == tipo]
+                    proyeccion_total = 0
+                    kwp_total = 0
+                    ahorro_total = 0
+                    
+                    for _, lead in leads_tipo.iterrows():
+                        if pd.notna(lead['sistema_recomendado']) and lead['sistema_recomendado'] > 0:
+                            precio_kwp = get_precio_por_sector(lead['tipo_negocio'])
+                            proyeccion_lead = lead['sistema_recomendado'] * precio_kwp
+                            proyeccion_total += proyeccion_lead
+                            kwp_total += lead['sistema_recomendado']
+                        
+                        # Sumar ahorro mensual
+                        if 'ahorro_mensual_clean' in lead.index and pd.notna(lead['ahorro_mensual_clean']):
+                            ahorro_total += lead['ahorro_mensual_clean']
+                    
+                    proyecciones_negocio.append(proyeccion_total)
+                    kwp_totales.append(kwp_total)
+                    ahorro_totales.append(ahorro_total)
+                
+                negocio_counts['Proyeccion_Ventas'] = proyecciones_negocio
+                negocio_counts['kWp_Total'] = kwp_totales
+                negocio_counts['Ahorro_Total'] = ahorro_totales
+                negocio_counts['Porcentaje'] = (negocio_counts['Cantidad'] / len(df) * 100).round(1)
+                
+                # Ordenar por proyección de ventas descendente y tomar top 8
+                negocio_counts = negocio_counts.sort_values('Proyeccion_Ventas', ascending=True).tail(8)
+                
+                if not negocio_counts.empty:
+                    st.write(f"📊 Top {len(negocio_counts)} tipos de negocio")
+                    
+                    # Crear colores degradados basados en proyección
+                    max_proyeccion = negocio_counts['Proyeccion_Ventas'].max()
+                    colors_negocio = []
+                    for proyeccion in negocio_counts['Proyeccion_Ventas']:
+                        if max_proyeccion > 0:
+                            intensity = proyeccion / max_proyeccion
+                            if intensity >= 0.8:
+                                colors_negocio.append('#059669')  # Verde oscuro
+                            elif intensity >= 0.6:
+                                colors_negocio.append('#10b981')  # Verde
+                            elif intensity >= 0.4:
+                                colors_negocio.append('#f59e0b')  # Naranja
+                            elif intensity >= 0.2:
+                                colors_negocio.append('#f97316')  # Naranja oscuro
+                            else:
+                                colors_negocio.append('#ef4444')  # Rojo
+                        else:
+                            colors_negocio.append('#64748b')  # Gris
+                    
+                    # Crear texto personalizado para el hover con datos financieros
+                    hover_text_negocio = []
+                    for _, row in negocio_counts.iterrows():
+                        precio_kwp_tipo = get_precio_por_sector(row['Tipo'])
+                        hover_text_negocio.append(
+                            f"<b>{row['Tipo']}</b><br>" +
+                            f"<br>" +
+                            f"📊 <b>Leads:</b> {row['Cantidad']} ({row['Porcentaje']}%)<br>" +
+                            f"<br>" +
+                            f"💰 <b>Proyección Total:</b> ${row['Proyeccion_Ventas']:,.0f} MXN<br>" +
+                            f"💎 <b>Promedio/Lead:</b> ${row['Proyeccion_Ventas']/row['Cantidad']:,.0f} MXN<br>" +
+                            f"<br>" +
+                            f"⚡ <b>kWp Total:</b> {row['kWp_Total']:,.1f} kWp<br>" +
+                            f"⚡ <b>kWp Promedio:</b> {row['kWp_Total']/row['Cantidad']:,.1f} kWp/lead<br>" +
+                            f"<br>" +
+                            f"💵 <b>Ahorro Mensual:</b> ${row['Ahorro_Total']:,.0f} MXN<br>" +
+                            f"💵 <b>Ahorro/Lead:</b> ${row['Ahorro_Total']/row['Cantidad']:,.0f} MXN/mes<br>" +
+                            f"<br>" +
+                            f"🏷️ <b>Precio/kWp:</b> ${precio_kwp_tipo:,.0f} MXN"
+                        )
+                    
+                    # Crear etiquetas con proyección
+                    negocio_counts['Etiqueta'] = negocio_counts.apply(
+                        lambda row: f"${row['Proyeccion_Ventas']/1000000:.1f}M" if row['Proyeccion_Ventas'] >= 1000000 
+                        else f"${row['Proyeccion_Ventas']/1000:.0f}k", 
+                        axis=1
+                    )
+                    
+                    # Crear gráfico de barras horizontales
+                    fig_negocio = go.Figure(data=[
+                        go.Bar(
+                            y=negocio_counts['Tipo'],
+                            x=negocio_counts['Proyeccion_Ventas'],
+                            orientation='h',
+                            marker=dict(
+                                color=colors_negocio,
+                                line=dict(color='rgba(0,0,0,0)', width=0)
+                            ),
+                            text=negocio_counts['Etiqueta'],
+                            textposition='outside',
+                            textfont=dict(color='#e2e8f0', size=10),
+                            hovertemplate='%{customdata}<extra></extra>',
+                            customdata=hover_text_negocio
+                        )
+                    ])
+                    
+                    # Configurar layout
+                    fig_negocio.update_layout(
+                        height=400,
+                        margin=dict(l=10, r=10, t=10, b=10),
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        font=dict(color='#e2e8f0'),
+                        xaxis=dict(
+                            showgrid=False,
+                            showticklabels=False,
+                            showline=False,
+                            zeroline=False
+                        ),
+                        yaxis=dict(
+                            showgrid=False,
+                            showline=False,
+                            tickfont=dict(color='#e2e8f0', size=11),
+                            categoryorder='total ascending'
+                        ),
+                        showlegend=False
+                    )
+                    
+                    st.plotly_chart(fig_negocio, use_container_width=True, config={'displayModeBar': False})
+                    
+                    # Resumen financiero
+                    total_proyeccion_negocios = negocio_counts['Proyeccion_Ventas'].sum()
+                    st.markdown(f"""
+                    <div style='font-size: 0.8rem; color: #94a3b8; text-align: center; margin-top: 8px; background: rgba(15, 31, 56, 0.3); padding: 10px; border-radius: 6px; border: 1px solid rgba(26, 53, 86, 0.5);'>
+                        <strong>💰 Proyección:</strong> ${total_proyeccion_negocios:,.0f} MXN • 
+                        <strong>⚡ kWp:</strong> {negocio_counts['kWp_Total'].sum():,.1f} • 
+                        <strong>📊 Leads:</strong> {negocio_counts['Cantidad'].sum()}
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.info("No hay datos de tipos de negocio")
+            else:
+                st.info("No hay información de tipos de negocio disponible")
         
         # Cerrar contenedor de columnas del dashboard
         st.markdown('</div>', unsafe_allow_html=True)
