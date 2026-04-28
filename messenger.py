@@ -97,15 +97,22 @@ def formatear_ahorro(ahorro_raw):
 
 
 def generar_mensaje_calificado(lead):
-    """Mensaje para leads con score >= 4 usando datos reales de la BD"""
+    """
+    Genera mensajes personalizados posicionándose como ASESOR de energía renovable
+    No como vendedor, sino como consultor que ayuda a optimizar costos
+    """
+    import random
+    
+    # Extraer datos del lead
+    nombre = lead.get('nombre', '') or ''
     direccion = lead.get('direccion', '') or ''
     ciudad = extraer_ciudad(direccion)
     tipo_negocio = lead.get('tipo_negocio', 'negocio') or 'negocio'
-
     ahorro_raw = lead.get('ahorro_mensual')
     score_raw = lead.get('score_ia', 0)
+    sistema_kwp = lead.get('sistema_recomendado', 0) or 0
     
-    # Manejar score None/invalid de forma segura
+    # Validar score
     try:
         score = int(score_raw) if score_raw is not None else 0
     except (ValueError, TypeError):
@@ -118,23 +125,179 @@ def generar_mensaje_calificado(lead):
     if not ahorro_txt:
         return None
 
-    # Pluralizar tipo de negocio de forma segura
+    # Limpiar y preparar tipo de negocio
     tipo_str = str(tipo_negocio).strip() if tipo_negocio else 'negocio'
-    tipo_plural = tipo_str.lower()
-    if not tipo_plural.endswith('s'):
-        tipo_plural += 's'
+    tipo_lower = tipo_str.lower()
+    
+    # Determinar artículo y forma del tipo de negocio
+    if 'hotel' in tipo_lower:
+        tipo_especifico = 'hoteles'
+        sector = 'hotelero'
+    elif 'restaurante' in tipo_lower:
+        tipo_especifico = 'restaurantes'
+        sector = 'restaurantero'
+    elif 'lavandería' in tipo_lower or 'lavanderia' in tipo_lower:
+        tipo_especifico = 'lavanderías'
+        sector = 'de lavanderías'
+    elif 'casino' in tipo_lower:
+        tipo_especifico = 'casinos'
+        sector = 'de entretenimiento'
+    elif 'farmacia' in tipo_lower:
+        tipo_especifico = 'farmacias'
+        sector = 'farmacéutico'
+    elif 'supermercado' in tipo_lower:
+        tipo_especifico = 'supermercados'
+        sector = 'comercial'
+    elif 'taller' in tipo_lower:
+        tipo_especifico = 'talleres'
+        sector = 'industrial'
+    elif 'tortillería' in tipo_lower or 'tortilleria' in tipo_lower:
+        tipo_especifico = 'tortillerías'
+        sector = 'alimenticio'
+    else:
+        tipo_especifico = tipo_lower + 's' if not tipo_lower.endswith('s') else tipo_lower
+        sector = 'comercial'
+    
+    # Calcular ahorro anual para contexto
+    try:
+        ahorro_num = int(float(ahorro_raw))
+        ahorro_anual = ahorro_num * 12
+        ahorro_anual_txt = f"${ahorro_anual:,}"
+    except:
+        ahorro_anual_txt = None
+    
+    # VARIACIONES DE MENSAJES - ENFOQUE ASESOR/CONSULTOR
+    
+    # Variación 1: Asesor que analiza consumo
+    mensaje_v1 = f"""Hola, buen día.
 
-    mensaje = f"""Hola, buen día.
+Soy asesor de energía renovable en CySlean. Estamos realizando un análisis de consumo eléctrico en {tipo_especifico} de {ciudad}.
 
-En {tipo_plural} similares al tuyo en {ciudad} hemos observado que pueden reducir parte de su gasto en CFE — en algunos casos alrededor de {ahorro_txt} al mes — sin alterar su operación.
+Según nuestros estudios en el sector {sector}, negocios como el tuyo podrían optimizar su gasto en CFE alrededor de {ahorro_txt} mensuales con la solución energética adecuada.
 
-Si te interesa, con gusto te comento cómo se está logrando.
+¿Te gustaría que te compartamos un análisis sin costo de tu caso específico?
 
-Contáctanos:
+Por favor responde:
+✅ SÍ - Me interesa el análisis
+⏰ DESPUÉS - Contáctenme más tarde
+❌ NO - No por ahora
+
+Saludos,
+Asesoría CySlean
+📞 771 661 2061"""
+
+    # Variación 2: Consultor que ofrece evaluación
+    mensaje_v2 = f"""Hola, buen día.
+
+Te contacto de CySlean, consultoría en energía renovable.
+
+Estamos apoyando a {tipo_especifico} en {ciudad} a evaluar opciones para reducir costos de electricidad de forma sustentable.
+
+En negocios similares al tuyo, hemos identificado oportunidades de ahorro de hasta {ahorro_txt}/mes.
+
+¿Te interesaría una evaluación energética gratuita?
+
+Responde:
+✅ SÍ, quiero la evaluación
+⏰ Tal vez después
+❌ No, gracias
+
+CySlean | Asesoría Energética
+📞 771 661 2061"""
+
+    # Variación 3: Experto que comparte información
+    mensaje_v3 = f"""Hola, buen día.
+
+Somos CySlean, asesoría especializada en optimización energética para el sector {sector}.
+
+Hemos trabajado con varios {tipo_especifico} en {ciudad} y los resultados típicos muestran ahorros de {ahorro_txt} mensuales en CFE.
+
+¿Te gustaría conocer las opciones disponibles para tu negocio?
+
+Por favor indica:
+✅ SÍ - Envíenme información
+⏰ DESPUÉS - En otro momento
+❌ NO - No me interesa
+
+Gracias,
+CySlean Asesoría Energética
 📞 771 661 2061
 🌐 www.cyslean.com"""
 
-    return mensaje
+    # Variación 4: Consultor directo y profesional
+    mensaje_v4 = f"""Hola, buen día.
+
+CySlean - Consultoría en Energía Renovable.
+
+Estamos asesorando a {tipo_especifico} en {ciudad} sobre alternativas para reducir costos operativos.
+
+Ahorro potencial estimado: {ahorro_txt}/mes
+
+¿Te interesa conocer las opciones?
+
+Responde:
+✅ SÍ
+⏰ DESPUÉS  
+❌ NO
+
+📞 771 661 2061
+www.cyslean.com"""
+
+    # Variación 5: Asesor con enfoque en beneficios del sector
+    if 'hotel' in tipo_lower:
+        beneficio_sector = "Además de reducir costos, mejoras tu certificación sustentable."
+    elif 'restaurante' in tipo_lower:
+        beneficio_sector = "Especialmente efectivo en negocios con alto consumo en refrigeración."
+    elif 'lavandería' in tipo_lower or 'lavanderia' in tipo_lower:
+        beneficio_sector = "Ideal para reducir el impacto de equipos de alto consumo."
+    elif 'supermercado' in tipo_lower:
+        beneficio_sector = "Optimiza costos de refrigeración y climatización."
+    else:
+        beneficio_sector = "Sin interrumpir tu operación diaria."
+    
+    mensaje_v5 = f"""Hola, buen día.
+
+Te escribo de CySlean, asesoría en energía renovable.
+
+Estamos apoyando a {tipo_especifico} de {ciudad} a evaluar alternativas para optimizar su consumo eléctrico.
+
+Tu negocio podría reducir cerca de {ahorro_txt} mensuales. {beneficio_sector}
+
+¿Te gustaría que te compartamos un análisis preliminar sin compromiso?
+
+Responde:
+✅ SÍ, me interesa
+⏰ Después
+❌ No, gracias
+
+CySlean | Asesoría Energética
+📞 771 661 2061"""
+
+    # Variación 6: Enfoque educativo/informativo
+    mensaje_v6 = f"""Hola, buen día.
+
+Soy de CySlean, asesoría en energía renovable para el sector {sector}.
+
+Estamos compartiendo información sobre cómo {tipo_especifico} en {ciudad} están optimizando sus costos de electricidad.
+
+Según nuestro análisis, negocios como el tuyo tienen un potencial de ahorro de {ahorro_txt}/mes con las soluciones adecuadas.
+
+¿Te gustaría recibir más información?
+
+Indica:
+✅ SÍ - Envíenme detalles
+⏰ DESPUÉS - Más adelante
+❌ NO - No por ahora
+
+Saludos,
+CySlean Asesoría
+📞 771 661 2061"""
+
+    # Seleccionar mensaje al azar para variar
+    mensajes = [mensaje_v1, mensaje_v2, mensaje_v3, mensaje_v4, mensaje_v5, mensaje_v6]
+    mensaje_seleccionado = random.choice(mensajes)
+    
+    return mensaje_seleccionado
 
 
 def agregar_columna_si_no_existe(cursor, tabla, columna, tipo):
