@@ -1168,8 +1168,11 @@ else:
             # Preparar datos para la tabla
             df_display = df_filtrado[[
                 'id', 'nombre', 'tipo_negocio', 'telefono', 'poblacion', 
-                'estado', 'score_ia', 'ahorro_mensual', 'estado_pipeline'
+                'estado', 'score_ia', 'ahorro_mensual', 'estado_pipeline', 'fecha_creacion'
             ]].copy()
+            
+            # ORDENAR: Más recientes primero (por ID descendente como proxy de fecha)
+            df_display = df_display.sort_values('id', ascending=False)
             
             # Formatear columnas - mantener ahorro_mensual como numérico para cálculos
             try:
