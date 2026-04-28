@@ -436,23 +436,40 @@ with st.sidebar:
                     
                 leads_guardados = 0
                 errores = []
-                for lead in leads_raw:
+                duplicados = 0
+                
+                for i, lead in enumerate(leads_raw, 1):
                     try:
+                        # Mostrar progreso
+                        if i % 2 == 0 or i == len(leads_raw):
+                            st.text(f"Procesando {i}/{len(leads_raw)}...")
+                        
                         from ai_processor import analyze_lead
                         analisis = analyze_lead(lead)
+                        
+                        # Verificar si el score es 0 (corporativo/descartado)
+                        if analisis.get('score_ia', 0) == 0:
+                            continue
+                        
                         lead_id = service.create_lead({**lead, **analisis, 'estado_pipeline': 'Nuevo'})
                         if lead_id:
                             leads_guardados += 1
+                        else:
+                            duplicados += 1
+                            
                     except Exception as e:
-                        errores.append(f"{lead.get('nombre', 'Unknown')}: {str(e)}")
+                        errores.append(f"{lead.get('nombre', 'Unknown')}: {str(e)[:100]}")
                 
+                # Mostrar resultados
                 if leads_guardados > 0:
                     st.success(f"✅ {leads_guardados} leads guardados")
+                elif duplicados > 0:
+                    st.warning(f"⚠️ 0 leads nuevos - {duplicados} duplicados encontrados")
                 else:
-                    st.warning(f"⚠️ 0 leads guardados (todos descartados o duplicados)")
+                    st.warning(f"⚠️ 0 leads guardados (todos descartados)")
                 
-                if errores:
-                    with st.expander("⚠️ Ver errores"):
+                if errores and len(errores) > 0:
+                    with st.expander(f"⚠️ Ver errores ({len(errores)})"):
                         for err in errores[:5]:  # Mostrar solo primeros 5
                             st.text(err)
                 
