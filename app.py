@@ -760,7 +760,7 @@ else:
                 map_data = st_folium(
                     m, 
                     width="100%",  # Usar porcentaje en lugar de píxeles fijos
-                    height=900,  # Altura mayor para ocupar el espacio de los dos gráficos
+                    height=600,  # Altura reducida para evitar scroll
                     returned_objects=["last_object_clicked"]
                 )
                 
@@ -916,7 +916,7 @@ else:
                 
                 # Configurar layout
                 fig.update_layout(
-                    height=400,
+                    height=280,  # Altura reducida para evitar scroll
                     margin=dict(l=10, r=10, t=10, b=10),
                     paper_bgcolor='rgba(0,0,0,0)',
                     plot_bgcolor='rgba(0,0,0,0)',
@@ -1057,7 +1057,7 @@ else:
                     
                     # Configurar layout
                     fig_negocio.update_layout(
-                        height=400,
+                        height=280,  # Altura reducida para evitar scroll
                         margin=dict(l=10, r=10, t=10, b=10),
                         paper_bgcolor='rgba(0,0,0,0)',
                         plot_bgcolor='rgba(0,0,0,0)',
