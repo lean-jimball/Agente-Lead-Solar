@@ -348,11 +348,56 @@ CySlean | Información Energética
         return random.choice(mensajes_suaves)
 
 
+def ejecutar_update_compatible(cursor, query, params):
+    """Ejecuta UPDATE compatible con PostgreSQL y SQLite"""
+    try:
+        # Detectar si es PostgreSQL
+        conn = cursor.connection
+        is_postgres = hasattr(conn, 'server_version')
+        
+        if is_postgres:
+            # Convertir placeholders ? a %s para PostgreSQL
+            query_pg = query.replace('?', '%s')
+            # Convertir datetime('now', 'localtime') a CURRENT_TIMESTAMP
+            query_pg = query_pg.replace("datetime('now', 'localtime')", 'CURRENT_TIMESTAMP')
+            query_pg = query_pg.replace("datetime('now')", 'CURRENT_TIMESTAMP')
+            cursor.execute(query_pg, params)
+        else:
+            # SQLite usa el query original
+            cursor.execute(query, params)
+    except Exception as e:
+        print(f"❌ Error en UPDATE: {e}")
+        raise
+
+
 def agregar_columna_si_no_existe(cursor, tabla, columna, tipo):
-    cursor.execute(f"PRAGMA table_info({tabla})")
-    columnas = [col[1] for col in cursor.fetchall()]
-    if columna not in columnas:
-        cursor.execute(f"ALTER TABLE {tabla} ADD COLUMN {columna} {tipo}")
+    """Agrega columna si no existe - Compatible con PostgreSQL y SQLite"""
+    try:
+        # Detectar si es PostgreSQL o SQLite
+        conn = cursor.connection
+        is_postgres = hasattr(conn, 'server_version')  # PostgreSQL tiene este atributo
+        
+        if is_postgres:
+            # PostgreSQL: Usar information_schema
+            cursor.execute("""
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name = %s AND column_name = %s
+            """, (tabla, columna))
+            
+            if not cursor.fetchone():
+                # Convertir tipo SQLite a PostgreSQL
+                tipo_pg = tipo.replace('INTEGER', 'INT').replace('TEXT', 'VARCHAR')
+                cursor.execute(f"ALTER TABLE {tabla} ADD COLUMN {columna} {tipo_pg}")
+        else:
+            # SQLite: Usar PRAGMA
+            cursor.execute(f"PRAGMA table_info({tabla})")
+            columnas = [col[1] for col in cursor.fetchall()]
+            if columna not in columnas:
+                cursor.execute(f"ALTER TABLE {tabla} ADD COLUMN {columna} {tipo}")
+    except Exception as e:
+        # Si la columna ya existe, ignorar el error
+        pass
 
 
 def detect_whatsapp_desktop():
@@ -535,7 +580,7 @@ def send_whatsapp_with_desktop_urls(leads_data, modo_preview=True):
             
             if resultado == 's':
                 # Marcar como enviado exitosamente
-                cursor.execute("""
+                ejecutar_update_compatible(cursor, """
                     UPDATE leads
                     SET estado_pipeline = 'Contactado',
                         enviado = 1,
@@ -555,7 +600,7 @@ def send_whatsapp_with_desktop_urls(leads_data, modo_preview=True):
                 
             elif resultado == 'n':
                 # Marcar como No WhatsApp
-                cursor.execute("""
+                ejecutar_update_compatible(cursor, """
                     UPDATE leads
                     SET estado_pipeline = 'No WhatsApp',
                         enviado = -1
@@ -567,7 +612,7 @@ def send_whatsapp_with_desktop_urls(leads_data, modo_preview=True):
                 
             else:
                 # Marcar como error
-                cursor.execute('UPDATE leads SET enviado = -1 WHERE id = ?', (lead_id,))
+                ejecutar_update_compatible(cursor, 'UPDATE leads SET enviado = -1 WHERE id = ?', (lead_id,))
                 conn.commit()
                 print(f"❌ Marcado como error: {nombre}")
                 omitidos += 1
@@ -585,7 +630,7 @@ def send_whatsapp_with_desktop_urls(leads_data, modo_preview=True):
             # Marcar como error
             conn = get_connection()
             cursor = conn.cursor()
-            cursor.execute('UPDATE leads SET enviado = -1 WHERE id = ?', (lead_id,))
+            ejecutar_update_compatible(cursor, 'UPDATE leads SET enviado = -1 WHERE id = ?', (lead_id,))
             conn.commit()
             conn.close()
             
@@ -796,7 +841,7 @@ def send_whatsapp_messages(modo_preview=True, usar_selenium=False, usar_desktop=
             # Marcar como teléfono inválido
             conn = get_connection()
             cursor = conn.cursor()
-            cursor.execute('UPDATE leads SET enviado = -1, estado_pipeline = "Sin teléfono" WHERE id = ?', (lead.get('id'),))
+            ejecutar_update_compatible(cursor, 'UPDATE leads SET enviado = -1, estado_pipeline = "Sin teléfono" WHERE id = ?', (lead.get('id'),))
             conn.commit()
             conn.close()
             continue
