@@ -17,7 +17,7 @@ def check_password():
     def password_entered():
         """Verifica si la contraseña ingresada es correcta."""
         # Obtener contraseña desde secrets o usar una por defecto
-        correct_password = os.getenv("APP_PASSWORD", "CySlean2024!")
+        correct_password = os.getenv("APP_PASSWORD", "Agente.CySlean1")
         correct_hash = hash_password(correct_password)
         entered_hash = hash_password(st.session_state["password"])
         

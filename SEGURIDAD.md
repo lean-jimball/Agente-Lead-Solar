@@ -20,8 +20,8 @@ Tu aplicación ahora está protegida con un sistema de autenticación por contra
 En el editor de Secrets, agrega:
 
 ```toml
-# Contraseña de acceso (CÁMBIALA por una segura)
-APP_PASSWORD = "TuContraseñaSegura123!"
+# Contraseña de acceso (puedes cambiarla si quieres)
+APP_PASSWORD = "Agente.CySlean1"
 
 # API Key de Google Gemini (si la tienes)
 GEMINI_API_KEY = "tu_api_key_aqui"
@@ -40,10 +40,10 @@ GEMINI_API_KEY = "tu_api_key_aqui"
 Si NO configuras `APP_PASSWORD` en Secrets, la contraseña por defecto es:
 
 ```
-CySlean2024!
+Agente.CySlean1
 ```
 
-⚠️ **IMPORTANTE**: Cambia esta contraseña inmediatamente en Streamlit Cloud Secrets.
+⚠️ **IMPORTANTE**: Esta es tu contraseña actual. Puedes cambiarla en Streamlit Cloud Secrets si lo deseas.
 
 ---
 
@@ -152,7 +152,7 @@ Si tienes problemas con la autenticación:
 
 1. Verifica que `APP_PASSWORD` esté configurado en Secrets
 2. Asegúrate de no tener espacios extra en la contraseña
-3. Prueba con la contraseña por defecto: `CySlean2024!`
+3. Prueba con la contraseña por defecto: `Agente.CySlean1`
 4. Revisa los logs en Streamlit Cloud para errores
 
 ---
