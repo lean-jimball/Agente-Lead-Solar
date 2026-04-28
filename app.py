@@ -30,6 +30,45 @@ from src.application.lead_service import LeadService
 service = LeadService()
 service.repo._init_db()
 
+# ─── FUNCIÓN DE NORMALIZACIÓN DE CATEGORÍAS ─────────────────────────────────
+def normalizar_tipo_negocio(tipo):
+    """Normaliza el tipo de negocio para agrupar variaciones similares."""
+    if pd.isna(tipo) or not tipo:
+        return "Sin categoría"
+    
+    tipo_lower = str(tipo).lower().strip()
+    
+    # Diccionario de normalización
+    normalizaciones = {
+        "lavanderia": "Lavandería", "lavanderias": "Lavandería",
+        "lavandería": "Lavandería", "lavanderías": "Lavandería",
+        "tintoreria": "Lavandería", "tintorerías": "Lavandería",
+        "hotel": "Hotel", "hoteles": "Hotel", "motel": "Hotel",
+        "moteles": "Hotel", "posada": "Hotel", "posadas": "Hotel",
+        "restaurante": "Restaurante", "restaurantes": "Restaurante",
+        "restaurant": "Restaurante", "restaurants": "Restaurante",
+        "comida": "Restaurante", "fonda": "Restaurante", "fondas": "Restaurante",
+        "casino": "Casino", "casinos": "Casino",
+        "panaderia": "Panadería", "panaderias": "Panadería",
+        "panadería": "Panadería", "panaderías": "Panadería",
+        "tortilleria": "Tortillería", "tortillerias": "Tortillería",
+        "tortillería": "Tortillería", "tortillerías": "Tortillería",
+        "gimnasio": "Gimnasio", "gimnasios": "Gimnasio", "gym": "Gimnasio",
+        "supermercado": "Supermercado", "supermercados": "Supermercado",
+        "super": "Supermercado", "tienda": "Supermercado",
+        "gasolinera": "Gasolinera", "gasolineras": "Gasolinera",
+        "hospital": "Hospital", "hospitales": "Hospital",
+        "clinica": "Hospital", "clínica": "Hospital",
+        "clinicas": "Hospital", "clínicas": "Hospital",
+        "escuela": "Escuela", "escuelas": "Escuela",
+        "colegio": "Escuela", "colegios": "Escuela",
+        "oficina": "Oficina", "oficinas": "Oficina",
+        "taller": "Taller", "talleres": "Taller",
+        "mecanico": "Taller", "mecánico": "Taller",
+    }
+    
+    return normalizaciones.get(tipo_lower, str(tipo).capitalize())
+
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
@@ -354,23 +393,19 @@ def extraer_estado(direccion):
 leads = service.get_all_leads(limit=5000)
 df = pd.DataFrame(leads) if leads else pd.DataFrame()
 
-# Calcular estadísticas globales para usar en toda la app
-DB_PATH = os.path.join(os.path.dirname(__file__), 'leads.db')
-conn = sqlite3.connect(DB_PATH)
-calificados = conn.execute("""
-SELECT COUNT(*) FROM leads 
-WHERE estado_pipeline IN ('Nuevo', 'Calificado', 'Contactado')
-AND telefono IS NOT NULL AND telefono != ''
-AND (enviado IS NULL OR enviado = 0)
-AND score_ia >= 4
-""").fetchone()[0]
+# Calcular estadísticas globales desde el DataFrame
+calificados = len(df[
+    (df['estado_pipeline'] == 'Calificado') &
+    (df['telefono'].notna()) & 
+    (df['telefono'] != '') &
+    ((df['enviado'].isna()) | (df['enviado'] == 0)) &
+    (df['sistema_recomendado'] > 0) &
+    (df['ahorro_mensual'] > 0) &
+    (df['score_ia'] >= 5)
+]) if not df.empty else 0
 
 # Contar leads sin teléfono
-sin_telefono = conn.execute("""
-SELECT COUNT(*) FROM leads 
-WHERE estado_pipeline = 'Sin teléfono'
-""").fetchone()[0]
-conn.close()
+sin_telefono = len(df[df['estado_pipeline'] == 'Sin teléfono']) if not df.empty else 0
 
 with st.sidebar:
     st.markdown("### ☀️ CySlean Lead Solar")
@@ -391,16 +426,36 @@ with st.sidebar:
                     try:
                         with open("temp_results.json", "r", encoding="utf-8") as f:
                             leads_raw = json.load(f)
-                    except: pass
+                    except Exception as e:
+                        st.error(f"Error leyendo resultados: {e}")
+                
+                if not leads_raw:
+                    st.warning("⚠️ No se encontraron resultados")
+                else:
+                    st.info(f"📊 Procesando {len(leads_raw)} resultados con IA...")
+                    
                 leads_guardados = 0
+                errores = []
                 for lead in leads_raw:
                     try:
                         from ai_processor import analyze_lead
                         analisis = analyze_lead(lead)
-                        if service.create_lead({**lead, **analisis, 'estado_pipeline': 'Nuevo'}):
+                        lead_id = service.create_lead({**lead, **analisis, 'estado_pipeline': 'Nuevo'})
+                        if lead_id:
                             leads_guardados += 1
-                    except: pass
-                st.success(f"✅ {leads_guardados} guardados")
+                    except Exception as e:
+                        errores.append(f"{lead.get('nombre', 'Unknown')}: {str(e)}")
+                
+                if leads_guardados > 0:
+                    st.success(f"✅ {leads_guardados} leads guardados")
+                else:
+                    st.warning(f"⚠️ 0 leads guardados (todos descartados o duplicados)")
+                
+                if errores:
+                    with st.expander("⚠️ Ver errores"):
+                        for err in errores[:5]:  # Mostrar solo primeros 5
+                            st.text(err)
+                
                 st.rerun()
             except Exception as e:
                 st.error(f"Error: {e}")
@@ -420,7 +475,7 @@ with st.sidebar:
     # Calcular leads calificables (siempre visible)
     leads_calificables = len(df[
         (df['estado_pipeline'].isin(['Nuevo', 'Sin teléfono', 'No WhatsApp'])) & 
-        (df['score_ia'] >= 4) &
+        (df['score_ia'] >= 5) &
         (df['telefono'].notna()) &
         (df['telefono'] != '')
     ]) if not df.empty else 0
@@ -440,15 +495,15 @@ with st.sidebar:
         except Exception as e:
             st.error(f"❌ Error: {e}")
     
-    # Botón 2: Calificar Nuevos ≥4 (siempre visible)
-    if st.button(f"⭐ Calificar Nuevos ≥4 ({leads_calificables})", 
-                help="Marca como 'Calificado' leads con score ≥ 4 y teléfono válido",
+    # Botón 2: Calificar Nuevos ≥5 (siempre visible)
+    if st.button(f"⭐ Calificar Nuevos ≥5 ({leads_calificables})", 
+                help="Marca como 'Calificado' leads con score ≥ 5 y teléfono válido",
                 disabled=leads_calificables==0,
                 key="sidebar_calificar"):
         try:
             leads_calificar = df[
                 (df['estado_pipeline'].isin(['Nuevo', 'Sin teléfono', 'No WhatsApp'])) & 
-                (df['score_ia'] >= 4) &
+                (df['score_ia'] >= 5) &
                 (df['telefono'].notna()) &
                 (df['telefono'] != '')
             ]
@@ -949,8 +1004,11 @@ else:
             
             # Agrupar por tipo de negocio
             if 'tipo_negocio' in df.columns and df['tipo_negocio'].notna().any():
-                # Contar leads por tipo de negocio
-                negocio_counts = df['tipo_negocio'].value_counts().reset_index()
+                # NORMALIZAR tipos de negocio antes de agrupar
+                df['tipo_negocio_normalizado'] = df['tipo_negocio'].apply(normalizar_tipo_negocio)
+                
+                # Contar leads por tipo de negocio NORMALIZADO
+                negocio_counts = df['tipo_negocio_normalizado'].value_counts().reset_index()
                 negocio_counts.columns = ['Tipo', 'Cantidad']
                 
                 # Calcular proyecciones financieras por tipo de negocio
@@ -959,14 +1017,14 @@ else:
                 ahorro_totales = []
                 
                 for tipo in negocio_counts['Tipo']:
-                    leads_tipo = df[df['tipo_negocio'] == tipo]
+                    leads_tipo = df[df['tipo_negocio_normalizado'] == tipo]
                     proyeccion_total = 0
                     kwp_total = 0
                     ahorro_total = 0
                     
                     for _, lead in leads_tipo.iterrows():
                         if pd.notna(lead['sistema_recomendado']) and lead['sistema_recomendado'] > 0:
-                            precio_kwp = get_precio_por_sector(lead['tipo_negocio'])
+                            precio_kwp = get_precio_por_sector(lead['tipo_negocio_normalizado'])
                             proyeccion_lead = lead['sistema_recomendado'] * precio_kwp
                             proyeccion_total += proyeccion_lead
                             kwp_total += lead['sistema_recomendado']
@@ -1118,8 +1176,13 @@ else:
                 estados_geograficos
             )
         with col3:
-            # Filtro de Tipo de Negocio
-            tipos_negocio = ["Todos"] + sorted(df['tipo_negocio'].dropna().unique().tolist())
+            # Filtro de Tipo de Negocio (normalizado)
+            if 'tipo_negocio' in df.columns:
+                df['tipo_negocio_normalizado'] = df['tipo_negocio'].apply(normalizar_tipo_negocio)
+                tipos_negocio = ["Todos"] + sorted(df['tipo_negocio_normalizado'].dropna().unique().tolist())
+            else:
+                tipos_negocio = ["Todos"]
+            
             filtro_tipo = st.selectbox(
                 "Tipo de Negocio",
                 tipos_negocio
@@ -1143,7 +1206,7 @@ else:
             df_filtrado = df_filtrado[df_filtrado['estado_limpio'] == filtro_estado_geo]
         
         if filtro_tipo != "Todos":
-            df_filtrado = df_filtrado[df_filtrado['tipo_negocio'] == filtro_tipo]
+            df_filtrado = df_filtrado[df_filtrado['tipo_negocio_normalizado'] == filtro_tipo]
         
         if filtro_score > 0:
             df_filtrado = df_filtrado[df_filtrado['score_ia'] >= filtro_score]
@@ -1223,7 +1286,7 @@ else:
                     cols[2].markdown(f'<div class="pipeline-table-cell" style="color: {telefono_color}; font-size: 0.8rem;" title="{telefono_text}">{telefono_display}</div>', unsafe_allow_html=True)
                     
                     # Score con color
-                    score_color = '#10b981' if row['score_ia'] >= 7 else '#f59e0b' if row['score_ia'] >= 4 else '#ef4444'
+                    score_color = '#10b981' if row['score_ia'] >= 7 else '#f59e0b' if row['score_ia'] >= 5 else '#ef4444'
                     cols[3].markdown(f'<div class="pipeline-table-cell" style="color: {score_color}; font-weight: 600; text-align: center;">{row["score_ia"]}</div>', unsafe_allow_html=True)
                     
                     # Ahorro compacto

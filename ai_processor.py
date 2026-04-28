@@ -10,7 +10,7 @@ load_dotenv()
 API_KEY = os.getenv("GEMINI_API_KEY")
 
 if API_KEY:
-    client = genai.Client(api_key=API_KEY)
+    client = genai.Client(api_key=API_KEY, http_options={'api_version': 'v1'})
 else:
     client = None
     print("⚠️ ADVERTENCIA: No se encontró GEMINI_API_KEY. Usando modo prueba.")
@@ -135,7 +135,7 @@ Regresa SOLO JSON:
 }}"""
 
         response = client.models.generate_content(
-            model='gemini-1.5-flash',
+            model='gemini-2.0-flash-exp',
             contents=prompt
         )
 

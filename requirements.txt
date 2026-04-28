@@ -11,3 +11,4 @@ selenium
 psutil
 plotly
 
+psycopg2-binary

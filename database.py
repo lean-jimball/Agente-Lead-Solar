@@ -3,14 +3,36 @@ import os
 import re
 import unicodedata
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Cargar variables de entorno
+load_dotenv()
+
+# Detectar si usar PostgreSQL o SQLite
+USE_POSTGRES = os.getenv('DATABASE_URL') is not None
+
+if USE_POSTGRES:
+    try:
+        import psycopg2
+        from psycopg2.extras import RealDictCursor
+        print("🐘 Usando PostgreSQL/Supabase (sincronización habilitada)")
+    except ImportError:
+        print("⚠️  psycopg2 no instalado, usando SQLite local")
+        USE_POSTGRES = False
 
 DB_NAME = 'leads.db'
 DB_PATH = os.path.join(os.path.dirname(__file__), DB_NAME)
 
 def get_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    """Retorna conexión a PostgreSQL o SQLite según configuración"""
+    if USE_POSTGRES:
+        database_url = os.getenv('DATABASE_URL')
+        conn = psycopg2.connect(database_url, cursor_factory=RealDictCursor)
+        return conn
+    else:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        return conn
 
 def agregar_columna_si_no_existe(cursor, tabla, columna, tipo):
     cursor.execute(f"PRAGMA table_info({tabla})")
@@ -22,59 +44,102 @@ def init_db():
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS leads (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre TEXT NOT NULL,
-            tipo_negocio TEXT,
-            telefono TEXT,
-            direccion TEXT,
-            poblacion TEXT,
-            estado TEXT,
-            calificacion REAL DEFAULT 0,
-            website TEXT,
-            estado_pipeline TEXT DEFAULT 'Nuevo' CHECK (estado_pipeline IN (
-                'Nuevo',
-                'Sin teléfono',
-                'No WhatsApp',
-                'Contactado',
-                'Calificado',
-                'Propuesta enviada',
-                'En negociación',
-                'Cerrado ganado',
-                'Cerrado perdido',
-                'No responde',
-                'Descartado'
-            )),
-            score_ia INTEGER DEFAULT 0,
-            razon_score TEXT,
-            consumo_estimado INTEGER DEFAULT 0,
-            sistema_recomendado REAL DEFAULT 0,
-            ahorro_mensual INTEGER DEFAULT 0,
-            mensaje_generado TEXT,
-            enviado INTEGER DEFAULT 0,
-            fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            fecha_ultimo_contacto TIMESTAMP,
-            fecha_contacto TEXT
-        )
-    """)
+    if USE_POSTGRES:
+        # PostgreSQL/Supabase
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS leads (
+                id SERIAL PRIMARY KEY,
+                nombre TEXT NOT NULL,
+                tipo_negocio TEXT,
+                telefono TEXT,
+                direccion TEXT,
+                poblacion TEXT,
+                estado TEXT,
+                calificacion REAL DEFAULT 0,
+                website TEXT,
+                estado_pipeline TEXT DEFAULT 'Nuevo',
+                score_ia INTEGER DEFAULT 0,
+                razon_score TEXT,
+                consumo_estimado INTEGER DEFAULT 0,
+                sistema_recomendado REAL DEFAULT 0,
+                ahorro_mensual INTEGER DEFAULT 0,
+                mensaje_generado TEXT,
+                enviado INTEGER DEFAULT 0,
+                fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                fecha_ultimo_contacto TIMESTAMP,
+                fecha_contacto TEXT,
+                CONSTRAINT estado_pipeline_check CHECK (estado_pipeline IN (
+                    'Nuevo', 'Sin teléfono', 'No WhatsApp', 'Contactado',
+                    'Calificado', 'Propuesta enviada', 'En negociación',
+                    'Cerrado ganado', 'Cerrado perdido', 'No responde', 'Descartado'
+                ))
+            )
+        """)
+        
+        # Crear índices
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_estado_pipeline ON leads(estado_pipeline)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_score_ia ON leads(score_ia)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_telefono ON leads(telefono)")
+        
+    else:
+        # SQLite
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS leads (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL,
+                tipo_negocio TEXT,
+                telefono TEXT,
+                direccion TEXT,
+                poblacion TEXT,
+                estado TEXT,
+                calificacion REAL DEFAULT 0,
+                website TEXT,
+                estado_pipeline TEXT DEFAULT 'Nuevo' CHECK (estado_pipeline IN (
+                    'Nuevo',
+                    'Sin teléfono',
+                    'No WhatsApp',
+                    'Contactado',
+                    'Calificado',
+                    'Propuesta enviada',
+                    'En negociación',
+                    'Cerrado ganado',
+                    'Cerrado perdido',
+                    'No responde',
+                    'Descartado'
+                )),
+                score_ia INTEGER DEFAULT 0,
+                razon_score TEXT,
+                consumo_estimado INTEGER DEFAULT 0,
+                sistema_recomendado REAL DEFAULT 0,
+                ahorro_mensual INTEGER DEFAULT 0,
+                mensaje_generado TEXT,
+                enviado INTEGER DEFAULT 0,
+                fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                fecha_ultimo_contacto TIMESTAMP,
+                fecha_contacto TEXT
+            )
+        """)
 
-    # Agrega columnas si la tabla ya existía
-    agregar_columna_si_no_existe(cursor, 'leads', 'poblacion', 'TEXT')
-    agregar_columna_si_no_existe(cursor, 'leads', 'estado', 'TEXT')
-    agregar_columna_si_no_existe(cursor, 'leads', 'calificacion', 'REAL DEFAULT 0')
-    agregar_columna_si_no_existe(cursor, 'leads', 'website', 'TEXT')
-    agregar_columna_si_no_existe(cursor, 'leads', 'enviado', 'INTEGER DEFAULT 0')
-    agregar_columna_si_no_existe(cursor, 'leads', 'fecha_contacto', 'TEXT')
+        # Agrega columnas si la tabla ya existía (solo SQLite)
+        agregar_columna_si_no_existe(cursor, 'leads', 'poblacion', 'TEXT')
+        agregar_columna_si_no_existe(cursor, 'leads', 'estado', 'TEXT')
+        agregar_columna_si_no_existe(cursor, 'leads', 'calificacion', 'REAL DEFAULT 0')
+        agregar_columna_si_no_existe(cursor, 'leads', 'website', 'TEXT')
+        agregar_columna_si_no_existe(cursor, 'leads', 'enviado', 'INTEGER DEFAULT 0')
+        agregar_columna_si_no_existe(cursor, 'leads', 'fecha_contacto', 'TEXT')
 
     conn.commit()
     conn.close()
-    print("Base de datos inicializada")
-    # Intentar rellenar poblacion para filas antiguas
-    try:
-        backfill_poblacion_from_direccion()
-    except Exception:
-        pass
+    
+    if USE_POSTGRES:
+        print("✅ Base de datos PostgreSQL/Supabase inicializada")
+    else:
+        print("✅ Base de datos SQLite local inicializada")
+        # Intentar rellenar poblacion para filas antiguas
+        try:
+            backfill_poblacion_from_direccion()
+        except Exception:
+            pass
 
 def backfill_poblacion_from_direccion():
     conn = get_connection()
@@ -164,27 +229,34 @@ def insert_lead(lead):
     cursor.execute("SELECT id, nombre, telefono, direccion FROM leads")
     rows = cursor.fetchall()
     for r in rows:
-        existing_nombre = r['nombre']
-        existing_tel = r['telefono'] or ''
+        existing_nombre = r['nombre'] if isinstance(r, dict) else r[1]
+        existing_tel = (r['telefono'] if isinstance(r, dict) else r[2]) or ''
+        existing_id = r['id'] if isinstance(r, dict) else r[0]
+        
         if existing_tel:
             if telefono and re.sub(r"\D", '', existing_tel) == re.sub(r"\D", '', telefono):
-                print(f"Duplicado por telefono omitido: {lead.get('nombre')} - Ya existe ID {r['id']}")
+                print(f"Duplicado por telefono omitido: {lead.get('nombre')} - Ya existe ID {existing_id}")
                 conn.close()
                 return None
         # comparar por nombre normalizado
         if normalizar_nombre(existing_nombre) == nombre_norm:
-            print(f"Duplicado por nombre omitido: {lead.get('nombre')} - Ya existe ID {r['id']}")
+            print(f"Duplicado por nombre omitido: {lead.get('nombre')} - Ya existe ID {existing_id}")
             conn.close()
             return None
 
     try:
-        cursor.execute("""
+        # Usar placeholder correcto según motor de BD
+        placeholder = '%s' if USE_POSTGRES else '?'
+        
+        query = f"""
             INSERT INTO leads (
                 nombre, tipo_negocio, telefono, direccion, poblacion, estado,
                 calificacion, website, estado_pipeline, score_ia, razon_score,
                 consumo_estimado, sistema_recomendado, ahorro_mensual, mensaje_generado
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-        """, (
+            ) VALUES ({','.join([placeholder]*15)})
+        """
+        
+        cursor.execute(query, (
             lead.get('nombre'),
             lead.get('tipo_negocio'),
             telefono,
@@ -202,7 +274,13 @@ def insert_lead(lead):
             lead.get('mensaje_generado')
         ))
 
-        lead_id = cursor.lastrowid
+        if USE_POSTGRES:
+            # PostgreSQL necesita RETURNING para obtener el ID
+            cursor.execute("SELECT lastval()")
+            lead_id = cursor.fetchone()[0] if isinstance(cursor.fetchone(), dict) else cursor.fetchone()[0]
+        else:
+            lead_id = cursor.lastrowid
+            
         conn.commit()
         print(f"Lead guardado: {lead.get('nombre')} - ID {lead_id} - Score {lead.get('score_ia')} - Estado: {estado_inicial} - Dir: {lead.get('direccion','Sin dir')[:30]}")
         return lead_id

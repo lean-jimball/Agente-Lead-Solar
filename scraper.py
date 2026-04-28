@@ -6,13 +6,142 @@ import re
 from playwright.sync_api import sync_playwright
 
 
+def normalizar_tipo_negocio(tipo):
+    """Normaliza el tipo de negocio para agrupar variaciones similares."""
+    if not tipo:
+        return "Sin categoría"
+    
+    tipo_lower = tipo.lower().strip()
+    
+    # Diccionario de normalización: variaciones → categoría estándar
+    normalizaciones = {
+        # Lavanderías
+        "lavanderia": "Lavandería",
+        "lavanderias": "Lavandería",
+        "lavandería": "Lavandería",
+        "lavanderías": "Lavandería",
+        "tintoreria": "Lavandería",
+        "tintorerías": "Lavandería",
+        
+        # Hoteles
+        "hotel": "Hotel",
+        "hoteles": "Hotel",
+        "motel": "Hotel",
+        "moteles": "Hotel",
+        "posada": "Hotel",
+        "posadas": "Hotel",
+        
+        # Restaurantes
+        "restaurante": "Restaurante",
+        "restaurantes": "Restaurante",
+        "restaurant": "Restaurante",
+        "restaurants": "Restaurante",
+        "comida": "Restaurante",
+        "fonda": "Restaurante",
+        "fondas": "Restaurante",
+        
+        # Casinos
+        "casino": "Casino",
+        "casinos": "Casino",
+        
+        # Panaderías
+        "panaderia": "Panadería",
+        "panaderias": "Panadería",
+        "panadería": "Panadería",
+        "panaderías": "Panadería",
+        
+        # Tortillerías
+        "tortilleria": "Tortillería",
+        "tortillerias": "Tortillería",
+        "tortillería": "Tortillería",
+        "tortillerías": "Tortillería",
+        
+        # Gimnasios
+        "gimnasio": "Gimnasio",
+        "gimnasios": "Gimnasio",
+        "gym": "Gimnasio",
+        
+        # Supermercados
+        "supermercado": "Supermercado",
+        "supermercados": "Supermercado",
+        "super": "Supermercado",
+        "tienda": "Supermercado",
+        
+        # Gasolineras
+        "gasolinera": "Gasolinera",
+        "gasolineras": "Gasolinera",
+        
+        # Hospitales/Clínicas
+        "hospital": "Hospital",
+        "hospitales": "Hospital",
+        "clinica": "Hospital",
+        "clínica": "Hospital",
+        "clinicas": "Hospital",
+        "clínicas": "Hospital",
+        
+        # Escuelas
+        "escuela": "Escuela",
+        "escuelas": "Escuela",
+        "colegio": "Escuela",
+        "colegios": "Escuela",
+        
+        # Oficinas
+        "oficina": "Oficina",
+        "oficinas": "Oficina",
+        
+        # Talleres
+        "taller": "Taller",
+        "talleres": "Taller",
+        "mecanico": "Taller",
+        "mecánico": "Taller",
+    }
+    
+    # Buscar normalización
+    return normalizaciones.get(tipo_lower, tipo.capitalize())
+
+
 def extraer_ciudad_de_query(query):
     """Extrae la ciudad/ubicación directamente de la query del usuario."""
     q = query.lower()
+    
     # Patrón: "en <ciudad>" o "in <ciudad>"
-    match = re.search(r'\ben\s+([a-záéíóúüñ][a-záéíóúüñ\s]+?)(?:\s*,|\s*$)', q)
+    match = re.search(r'\ben\s+([a-záéíóúüñ][a-záéíóúüñ\s,]+?)(?:\s*$)', q)
     if match:
-        return match.group(1).strip().title()
+        ciudad_completa = match.group(1).strip()
+        
+        # Si hay coma, analizar "ciudad, estado"
+        if ',' in ciudad_completa:
+            partes = [p.strip() for p in ciudad_completa.split(',')]
+            ciudad_parte = partes[0]
+            estado_parte = partes[1] if len(partes) > 1 else ""
+            
+            # Casos especiales: ciudad y estado con mismo nombre
+            casos_especiales = {
+                "oaxaca": "Oaxaca",
+                "veracruz": "Veracruz", 
+                "puebla": "Puebla",
+                "chihuahua": "Chihuahua",
+                "colima": "Colima",
+                "durango": "Durango",
+                "morelos": "Morelos",
+                "zacatecas": "Zacatecas"
+            }
+            
+            ciudad_norm = ciudad_parte.lower().strip()
+            estado_norm = estado_parte.lower().strip()
+            
+            # Si ambos son iguales y están en casos especiales, usar la ciudad
+            if ciudad_norm == estado_norm and ciudad_norm in casos_especiales:
+                return casos_especiales[ciudad_norm]
+            
+            # Si la ciudad está en casos especiales, usarla
+            if ciudad_norm in casos_especiales:
+                return casos_especiales[ciudad_norm]
+                
+            return ciudad_parte.title()
+        
+        return ciudad_completa.title()
+    
     # Fallback: última palabra(s) significativas
     palabras = query.split()
     if len(palabras) >= 2:
@@ -23,6 +152,34 @@ def extraer_ciudad_de_query(query):
 def extraer_estado_de_query(query):
     """Infiere el estado a partir de la ciudad mencionada en la query."""
     ciudad_estado_map = {
+        # Ciudades específicas primero (para evitar conflictos con estados)
+        "tehuacan": ("Tehuacán", "Pue."),
+        "xalapa": ("Xalapa", "Ver."),
+        "jalapa": ("Xalapa", "Ver."),
+        "coatzacoalcos": ("Coatzacoalcos", "Ver."),
+        "poza rica": ("Poza Rica", "Ver."),
+        "cordoba": ("Córdoba", "Ver."),
+        "minatitlan": ("Minatitlán", "Ver."),
+        "boca del rio": ("Boca del Río", "Ver."),
+        "oaxaca de juarez": ("Oaxaca de Juárez", "Oax."),
+        "salina cruz": ("Salina Cruz", "Oax."),
+        "juchitan": ("Juchitán", "Oax."),
+        "tuxtepec": ("Tuxtepec", "Oax."),
+        "chihuahua capital": ("Chihuahua", "Chih."),
+        "ciudad juarez": ("Ciudad Juárez", "Chih."),
+        "delicias": ("Delicias", "Chih."),
+        "parral": ("Parral", "Chih."),
+        "colima capital": ("Colima", "Col."),
+        "manzanillo": ("Manzanillo", "Col."),
+        "tecoman": ("Tecomán", "Col."),
+        "durango capital": ("Durango", "Dgo."),
+        "gomez palacio": ("Gómez Palacio", "Dgo."),
+        "lerdo": ("Lerdo", "Dgo."),
+        "zacatecas capital": ("Zacatecas", "Zac."),
+        "fresnillo": ("Fresnillo", "Zac."),
+        "guadalupe zac": ("Guadalupe", "Zac."),
+        
+        # Ciudades principales específicas
         "tapachula": ("Tapachula", "Chis."),
         "tuxtla": ("Tuxtla Gutiérrez", "Chis."),
         "san cristobal": ("San Cristóbal de las Casas", "Chis."),
@@ -31,23 +188,28 @@ def extraer_estado_de_query(query):
         "mineral de la reforma": ("Mineral de la Reforma", "Hgo."),
         "tulancingo": ("Tulancingo", "Hgo."),
         "tula": ("Tula de Allende", "Hgo."),
+        "san luis potosi": ("San Luis Potosí", "S.L.P."),
+        
+        # Estados/ciudades principales después (menos específicos)
         "puebla": ("Puebla", "Pue."),
+        "veracruz": ("Veracruz", "Ver."),
+        "oaxaca": ("Oaxaca", "Oax."),
+        "chihuahua": ("Chihuahua", "Chih."),
+        "colima": ("Colima", "Col."),
+        "durango": ("Durango", "Dgo."),
+        "zacatecas": ("Zacatecas", "Zac."),
         "mexico": ("Ciudad de México", "CDMX"),
         "cdmx": ("Ciudad de México", "CDMX"),
         "guadalajara": ("Guadalajara", "Jal."),
         "monterrey": ("Monterrey", "N.L."),
         "cancun": ("Cancún", "Q.R."),
         "merida": ("Mérida", "Yuc."),
-        "oaxaca": ("Oaxaca", "Oax."),
-        "veracruz": ("Veracruz", "Ver."),
         "tijuana": ("Tijuana", "B.C."),
-        "chihuahua": ("Chihuahua", "Chih."),
         "hermosillo": ("Hermosillo", "Son."),
         "culiacan": ("Culiacán", "Sin."),
         "morelia": ("Morelia", "Mich."),
         "leon": ("León", "Gto."),
         "queretaro": ("Querétaro", "Qro."),
-        "san luis potosi": ("San Luis Potosí", "S.L.P."),
         "aguascalientes": ("Aguascalientes", "Ags."),
         "cuernavaca": ("Cuernavaca", "Mor."),
         "toluca": ("Toluca", "Edomex"),
@@ -60,9 +222,12 @@ def extraer_estado_de_query(query):
         return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
 
     q_norm_clean = norm(q_norm)
+    
+    # Buscar ciudades específicas primero (más específico)
     for key, val in ciudad_estado_map.items():
         if norm(key) in q_norm_clean:
             return val  # (ciudad, estado_abrev)
+    
     return (None, None)
 
 
@@ -210,13 +375,21 @@ def scrape_google_maps(query, max_results=5):
                     direccion_lower = direccion.lower() if direccion else ""
                     ciudad_query_lower = ciudad_query.lower() if ciudad_query else ""
 
+                    # Hacer validación más flexible - buscar palabras clave de la ciudad
+                    palabras_ciudad = ciudad_query_lower.split() if ciudad_query_lower else []
+                    palabras_importantes = [p for p in palabras_ciudad if len(p) > 3]
+                    
                     resultado_fuera_de_ciudad = (
                         ciudad_query_lower and
-                        ciudad_query_lower not in direccion_lower and
+                        len(palabras_importantes) > 0 and
                         not any(
                             palabra in direccion_lower
-                            for palabra in ciudad_query_lower.split()
-                            if len(palabra) > 3
+                            for palabra in palabras_importantes
+                        ) and
+                        # Verificación adicional: si no hay dirección pero el nombre contiene la ciudad
+                        not any(
+                            palabra in nombre.lower()
+                            for palabra in palabras_importantes
                         )
                     )
 
@@ -237,7 +410,7 @@ def scrape_google_maps(query, max_results=5):
                     if nombre != "Desconocido":
                         lead_item = {
                             "nombre": nombre,
-                            "tipo_negocio": query.split(' ')[0],
+                            "tipo_negocio": normalizar_tipo_negocio(query.split(' ')[0]),
                             "telefono": telefono,
                             "direccion": direccion if direccion else f"{poblacion}, {estado_prov}",
                             "poblacion": poblacion,

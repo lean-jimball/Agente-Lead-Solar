@@ -98,8 +98,14 @@ def formatear_ahorro(ahorro_raw):
 
 def generar_mensaje_calificado(lead):
     """
-    Genera mensajes personalizados posicionándose como ASESOR de energía renovable
+    Genera mensajes personalizados por SCORE posicionándose como ASESOR/ALIADO COMERCIAL
     No como vendedor, sino como consultor que ayuda a optimizar costos
+    
+    SEGMENTACIÓN POR SCORE (0-10):
+    - Score 9-10: 🔥 Mensaje directo/urgente (asesor experto)
+    - Score 8-8.9: 🚀 Mensaje persuasivo (aliado comercial)  
+    - Score 7-7.9: ⚡ Mensaje educativo (consultor)
+    - Score 5-6.9: 🟡 Mensaje suave/nutrir (asesor informativo)
     """
     import random
     
@@ -118,7 +124,7 @@ def generar_mensaje_calificado(lead):
     except (ValueError, TypeError):
         score = 0
     
-    if not ahorro_raw or score < 4:
+    if not ahorro_raw or score < 5:
         return None
 
     ahorro_txt = formatear_ahorro(ahorro_raw)
@@ -166,138 +172,180 @@ def generar_mensaje_calificado(lead):
     except:
         ahorro_anual_txt = None
     
-    # VARIACIONES DE MENSAJES - ENFOQUE ASESOR/CONSULTOR
+    # SEGMENTACIÓN POR SCORE - DIFERENTES ENFOQUES DE ASESORÍA
     
-    # Variación 1: Asesor que analiza consumo
-    mensaje_v1 = f"""Hola, buen día.
+    if score >= 9:
+        # 🔥 SCORE 9-10: ASESOR EXPERTO - MENSAJE DIRECTO/URGENTE
+        mensajes_premium = [
+            f"""Hola, buen día.
 
-Soy asesor de energía renovable en CySlean. Estamos realizando un análisis de consumo eléctrico en {tipo_especifico} de {ciudad}.
+Soy asesor especializado de CySlean. Hemos identificado tu negocio como candidato PRIORITARIO para optimización energética.
 
-Según nuestros estudios en el sector {sector}, negocios como el tuyo podrían optimizar su gasto en CFE alrededor de {ahorro_txt} mensuales con la solución energética adecuada.
+Análisis preliminar para {tipo_especifico} en {ciudad}:
+• Ahorro potencial: {ahorro_txt}/mes
+• ROI proyectado: Excelente para tu sector
+• Oportunidad limitada en tu zona
 
-¿Te gustaría que te compartamos un análisis sin costo de tu caso específico?
+Como experto en el sector {sector}, te recomiendo evaluar esta oportunidad pronto.
 
-Por favor responde:
-✅ SÍ - Me interesa el análisis
-⏰ DESPUÉS - Contáctenme más tarde
-❌ NO - No por ahora
-
-Saludos,
-Asesoría CySlean
-📞 771 661 2061"""
-
-    # Variación 2: Consultor que ofrece evaluación
-    mensaje_v2 = f"""Hola, buen día.
-
-Te contacto de CySlean, consultoría en energía renovable.
-
-Estamos apoyando a {tipo_especifico} en {ciudad} a evaluar opciones para reducir costos de electricidad de forma sustentable.
-
-En negocios similares al tuyo, hemos identificado oportunidades de ahorro de hasta {ahorro_txt}/mes.
-
-¿Te interesaría una evaluación energética gratuita?
+¿Podemos agendar una consultoría técnica esta semana?
 
 Responde:
-✅ SÍ, quiero la evaluación
-⏰ Tal vez después
-❌ No, gracias
+✅ SÍ - Agendemos pronto
+⏰ DESPUÉS - Próxima semana
+❌ NO - No por ahora
 
-CySlean | Asesoría Energética
+CySlean | Asesoría Especializada
+📞 771 661 2061""",
+
+            f"""Hola, buen día.
+
+Te contacto como asesor energético de CySlean. Tu negocio tiene un perfil EXCEPCIONAL para energía renovable.
+
+Datos específicos para tu {tipo_str} en {ciudad}:
+• Potencial de ahorro: {ahorro_txt} mensuales
+• Sector {sector}: Alta viabilidad técnica
+• Análisis: Candidato prioritario
+
+Mi recomendación profesional: Evaluar inmediatamente.
+
+¿Te interesa una consultoría técnica sin costo?
+
+✅ SÍ - Coordinar visita
+⏰ DESPUÉS - En unos días  
+❌ NO - No me interesa
+
+CySlean Asesoría Técnica
 📞 771 661 2061"""
+        ]
+        return random.choice(mensajes_premium)
+    
+    elif score >= 8:
+        # 🚀 SCORE 8-8.9: ALIADO COMERCIAL - MENSAJE PERSUASIVO
+        mensajes_alta_prioridad = [
+            f"""Hola, buen día.
 
-    # Variación 3: Experto que comparte información
-    mensaje_v3 = f"""Hola, buen día.
+Soy tu aliado comercial en CySlean, consultoría energética.
 
-Somos CySlean, asesoría especializada en optimización energética para el sector {sector}.
+Estamos apoyando a {tipo_especifico} exitosos en {ciudad} a reducir significativamente sus costos operativos.
 
-Hemos trabajado con varios {tipo_especifico} en {ciudad} y los resultados típicos muestran ahorros de {ahorro_txt} mensuales en CFE.
+Tu negocio califica para ahorros de {ahorro_txt}/mes. En el sector {sector}, estos resultados son muy atractivos.
 
-¿Te gustaría conocer las opciones disponibles para tu negocio?
+Como tu asesor, te recomiendo conocer las opciones disponibles.
 
-Por favor indica:
+¿Te interesa que te comparta el análisis completo?
+
+Responde:
+✅ SÍ - Envíame el análisis
+⏰ DESPUÉS - Más adelante
+❌ NO - No gracias
+
+CySlean | Tu Aliado Energético
+📞 771 661 2061""",
+
+            f"""Hola, buen día.
+
+Te escribo de CySlean como tu consultor en optimización energética.
+
+Hemos identificado una excelente oportunidad para {tipo_especifico} como el tuyo en {ciudad}.
+
+Beneficios proyectados:
+• Reducción mensual: {ahorro_txt}
+• Sector {sector}: Resultados comprobados
+• Sin afectar tu operación
+
+¿Te gustaría que te asesore sobre las mejores opciones?
+
+✅ SÍ - Quiero asesoría
+⏰ DESPUÉS - Otro momento
+❌ NO - No por ahora
+
+CySlean Consultoría
+📞 771 661 2061"""
+        ]
+        return random.choice(mensajes_alta_prioridad)
+    
+    elif score >= 7:
+        # ⚡ SCORE 7-7.9: CONSULTOR - MENSAJE EDUCATIVO
+        mensajes_educativos = [
+            f"""Hola, buen día.
+
+Soy consultor de CySlean, especialistas en energía renovable.
+
+Estamos compartiendo información valiosa con {tipo_especifico} de {ciudad} sobre cómo optimizar costos energéticos.
+
+Según nuestros estudios en el sector {sector}, negocios como el tuyo pueden reducir hasta {ahorro_txt} mensuales con las estrategias correctas.
+
+¿Te interesa conocer estas alternativas?
+
+Responde:
 ✅ SÍ - Envíenme información
 ⏰ DESPUÉS - En otro momento
 ❌ NO - No me interesa
 
-Gracias,
-CySlean Asesoría Energética
-📞 771 661 2061
-🌐 www.cyslean.com"""
+CySlean Consultoría Energética
+📞 771 661 2061""",
 
-    # Variación 4: Consultor directo y profesional
-    mensaje_v4 = f"""Hola, buen día.
+            f"""Hola, buen día.
 
-CySlean - Consultoría en Energía Renovable.
+Te contacto de CySlean para compartir información sobre optimización energética.
 
-Estamos asesorando a {tipo_especifico} en {ciudad} sobre alternativas para reducir costos operativos.
+Estamos educando a propietarios de {tipo_especifico} en {ciudad} sobre alternativas sustentables para reducir costos.
 
-Ahorro potencial estimado: {ahorro_txt}/mes
+Tu tipo de negocio tiene potencial de ahorro de {ahorro_txt}/mes según nuestros análisis del sector {sector}.
 
-¿Te interesa conocer las opciones?
+¿Te gustaría recibir material informativo?
 
-Responde:
-✅ SÍ
-⏰ DESPUÉS  
-❌ NO
-
-📞 771 661 2061
-www.cyslean.com"""
-
-    # Variación 5: Asesor con enfoque en beneficios del sector
-    if 'hotel' in tipo_lower:
-        beneficio_sector = "Además de reducir costos, mejoras tu certificación sustentable."
-    elif 'restaurante' in tipo_lower:
-        beneficio_sector = "Especialmente efectivo en negocios con alto consumo en refrigeración."
-    elif 'lavandería' in tipo_lower or 'lavanderia' in tipo_lower:
-        beneficio_sector = "Ideal para reducir el impacto de equipos de alto consumo."
-    elif 'supermercado' in tipo_lower:
-        beneficio_sector = "Optimiza costos de refrigeración y climatización."
-    else:
-        beneficio_sector = "Sin interrumpir tu operación diaria."
-    
-    mensaje_v5 = f"""Hola, buen día.
-
-Te escribo de CySlean, asesoría en energía renovable.
-
-Estamos apoyando a {tipo_especifico} de {ciudad} a evaluar alternativas para optimizar su consumo eléctrico.
-
-Tu negocio podría reducir cerca de {ahorro_txt} mensuales. {beneficio_sector}
-
-¿Te gustaría que te compartamos un análisis preliminar sin compromiso?
-
-Responde:
-✅ SÍ, me interesa
-⏰ Después
-❌ No, gracias
-
-CySlean | Asesoría Energética
-📞 771 661 2061"""
-
-    # Variación 6: Enfoque educativo/informativo
-    mensaje_v6 = f"""Hola, buen día.
-
-Soy de CySlean, asesoría en energía renovable para el sector {sector}.
-
-Estamos compartiendo información sobre cómo {tipo_especifico} en {ciudad} están optimizando sus costos de electricidad.
-
-Según nuestro análisis, negocios como el tuyo tienen un potencial de ahorro de {ahorro_txt}/mes con las soluciones adecuadas.
-
-¿Te gustaría recibir más información?
-
-Indica:
 ✅ SÍ - Envíenme detalles
-⏰ DESPUÉS - Más adelante
+⏰ DESPUÉS - Más adelante  
+❌ NO - No gracias
+
+CySlean | Educación Energética
+📞 771 661 2061"""
+        ]
+        return random.choice(mensajes_educativos)
+    
+    else:
+        # 🟡 SCORE 5-6.9: ASESOR INFORMATIVO - MENSAJE SUAVE/NUTRIR
+        mensajes_suaves = [
+            f"""Hola, buen día.
+
+Soy asesor de CySlean. Estamos realizando un estudio sobre consumo energético en {tipo_especifico} de {ciudad}.
+
+Hemos notado que negocios en el sector {sector} están explorando alternativas para optimizar sus costos de electricidad.
+
+Según nuestros datos, hay potencial de ahorro de {ahorro_txt} mensuales en casos similares al tuyo.
+
+¿Te interesaría recibir información general sobre estas alternativas?
+
+Responde cuando gustes:
+✅ SÍ - Me interesa saber más
+⏰ DESPUÉS - Tal vez después
 ❌ NO - No por ahora
 
 Saludos,
 CySlean Asesoría
-📞 771 661 2061"""
+📞 771 661 2061""",
 
-    # Seleccionar mensaje al azar para variar
-    mensajes = [mensaje_v1, mensaje_v2, mensaje_v3, mensaje_v4, mensaje_v5, mensaje_v6]
-    mensaje_seleccionado = random.choice(mensajes)
-    
-    return mensaje_seleccionado
+            f"""Hola, buen día.
+
+Te saludo de CySlean, consultoría en energía renovable.
+
+Estamos compartiendo información educativa con {tipo_especifico} de {ciudad} sobre tendencias en optimización energética.
+
+Tu sector ({sector}) muestra oportunidades interesantes, con ahorros potenciales de {ahorro_txt}/mes en casos similares.
+
+¿Te gustaría mantenerte informado sobre estas opciones?
+
+Sin presión, responde si te interesa:
+✅ SÍ - Información ocasional
+⏰ DESPUÉS - Quizás más adelante
+❌ NO - No gracias
+
+CySlean | Información Energética
+📞 771 661 2061"""
+        ]
+        return random.choice(mensajes_suaves)
 
 
 def agregar_columna_si_no_existe(cursor, tabla, columna, tipo):
@@ -716,24 +764,24 @@ def send_whatsapp_messages(modo_preview=True, usar_selenium=False, usar_desktop=
 
     cursor.execute("""
         SELECT * FROM leads
-        WHERE estado_pipeline IN ('Nuevo', 'Calificado', 'Contactado')
+        WHERE estado_pipeline = 'Calificado'
         AND telefono IS NOT NULL
         AND telefono != ''
         AND (enviado IS NULL OR enviado = 0)
         AND sistema_recomendado > 0
         AND ahorro_mensual > 0
-        AND score_ia >= 4
+        AND score_ia >= 5
         ORDER BY score_ia DESC, ahorro_mensual DESC
     """)
     leads_pendientes = [dict(row) for row in cursor.fetchall()]
     conn.close()
 
     if not leads_pendientes:
-        print("❌ No hay leads con teléfono y score >= 4")
+        print("❌ No hay leads con teléfono y score >= 5")
         print("\n💡 Revisa que tengas leads con:")
         print("   1. telefono capturado")
-        print("   2. score_ia >= 4")
-        print("   3. estado = Nuevo, Calificado o Contactado")
+        print("   2. score_ia >= 5 (50% para arriba)")
+        print("   3. estado = Calificado (usar botón calificación masiva)")
         print("   4. enviado = 0 o NULL")
         return 0
 
