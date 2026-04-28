@@ -6,6 +6,15 @@ import sqlite3
 import folium
 from streamlit_folium import st_folium
 
+# ─── AUTENTICACIÓN ─────────────────────────────────────────────────────────
+from auth import check_password
+
+st.set_page_config(page_title="CySlean Lead Solar", page_icon="☀️", layout="wide")
+
+# Verificar autenticación ANTES de cargar cualquier cosa
+if not check_password():
+    st.stop()  # Detener ejecución si no está autenticado
+
 # ─── COMPATIBILIDAD: Para messenger.py antiguo ─────────────────────────────
 def get_connection():
     """Función de compatibilidad para messenger.py"""
@@ -20,8 +29,6 @@ from src.application.lead_service import LeadService
 
 service = LeadService()
 service.repo._init_db()
-
-st.set_page_config(page_title="CySlean Lead Solar", page_icon="☀️", layout="wide")
 
 st.markdown("""
 <style>
